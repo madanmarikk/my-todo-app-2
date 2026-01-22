@@ -62,6 +62,8 @@ export function Todos() {
         audience: 'https://test-endpoint',
         scope: 'write:todos'
       })
+
+      // Use the updated createTodo that returns the todo directly
       const createdTodo = await createTodo(accessToken, newTodo)
 
       // Normalize fields in case backend returns incomplete object
@@ -72,9 +74,11 @@ export function Todos() {
         done: createdTodo.done ?? false,
         attachmentUrl: createdTodo.attachmentUrl || null
       }
-      setTodos([...todos, normalized])
+
+      // Update state immediately to show new todo without refresh
+      setTodos((prevTodos) => [...prevTodos, normalized])
     } catch (e) {
-      alert('Failed to create a new TODO')
+      alert('Failed to create a new TODO') // Only show if API call fails
       console.error(e)
     }
   }

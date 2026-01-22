@@ -37,8 +37,10 @@ export async function createTodo(accessToken, newTodo) {
       }
     }
   )
-  // Ensure returned item has done and todoId
-  const item = response.data.item
+
+  // response.data is the todo itself
+  const item = response.data
+
   return {
     todoId: item.todoId,
     name: item.name,
