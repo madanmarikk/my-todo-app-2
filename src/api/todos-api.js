@@ -19,9 +19,16 @@ export async function getTodos(accessToken) {
       }
     }
   )
-  console.log('Todos:', response.data)
-  console.log('Fetching todos', response.data.items)
-  return response.data.items
+  console.log('Todos fetched:', response.data)
+
+  // Return todos; attachmentUrl should already be presigned URL
+  return response.data.items.map((item) => ({
+    todoId: item.todoId,
+    name: item.name,
+    dueDate: item.dueDate,
+    done: item.done ?? false,
+    attachmentUrl: item.attachmentUrl || null // presigned URL from backend
+  }))
 }
 
 export async function createTodo(accessToken, newTodo) {
@@ -29,7 +36,7 @@ export async function createTodo(accessToken, newTodo) {
 
   const response = await Axios.post(
     `${process.env.REACT_APP_API_ENDPOINT}/todos`,
-    normalizedTodo, // Axios automatically stringifies objects
+    normalizedTodo,
     {
       headers: {
         'Content-Type': 'application/json',
@@ -38,14 +45,14 @@ export async function createTodo(accessToken, newTodo) {
     }
   )
 
-  // response.data is the todo itself
   const item = response.data
 
   return {
     todoId: item.todoId,
     name: item.name,
     dueDate: item.dueDate,
-    done: item.done ?? false
+    done: item.done ?? false,
+    attachmentUrl: item.attachmentUrl || null
   }
 }
 

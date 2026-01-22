@@ -22,9 +22,6 @@ export function Todos() {
   const [loadingTodos, setLoadingTodos] = useState(true)
   const navigate = useNavigate()
 
-  // Log user info
-  console.log('User', { name: user?.name, email: user?.email })
-
   // Fetch todos on mount
   useEffect(() => {
     async function fetchTodos() {
@@ -33,17 +30,18 @@ export function Todos() {
           audience: 'https://test-endpoint',
           scope: 'read:todos'
         })
-        console.log('Access token:', accessToken)
-        const todos = await getTodos(accessToken)
-        setTodos(
-          todos.map((t) => ({
-            todoId: t.todoId,
-            name: t.name || 'Untitled',
-            dueDate: t.dueDate || new Date().toISOString(),
-            done: t.done ?? false,
-            attachmentUrl: t.attachmentUrl || null
-          }))
-        )
+        const todosFromApi = await getTodos(accessToken)
+
+        // Ensure attachmentUrl is valid presigned URL
+        const normalized = todosFromApi.map((t) => ({
+          todoId: t.todoId,
+          name: t.name || 'Untitled',
+          dueDate: t.dueDate || new Date().toISOString(),
+          done: t.done ?? false,
+          attachmentUrl: t.attachmentUrl || null
+        }))
+
+        setTodos(normalized)
       } catch (e) {
         alert(`Failed to fetch todos: ${e.message}`)
         console.error(e)
@@ -62,23 +60,17 @@ export function Todos() {
         audience: 'https://test-endpoint',
         scope: 'write:todos'
       })
-
-      // Use the updated createTodo that returns the todo directly
       const createdTodo = await createTodo(accessToken, newTodo)
-
-      // Normalize fields in case backend returns incomplete object
       const normalized = {
-        todoId: createdTodo.todoId || Date.now().toString(),
+        todoId: createdTodo.todoId,
         name: createdTodo.name || 'Untitled',
         dueDate: createdTodo.dueDate || new Date().toISOString(),
         done: createdTodo.done ?? false,
         attachmentUrl: createdTodo.attachmentUrl || null
       }
-
-      // Update state immediately to show new todo without refresh
-      setTodos((prevTodos) => [...prevTodos, normalized])
+      setTodos((prev) => [...prev, normalized])
     } catch (e) {
-      alert('Failed to create a new TODO') // Only show if API call fails
+      alert('Failed to create a new TODO')
       console.error(e)
     }
   }
@@ -97,12 +89,10 @@ export function Todos() {
         done: !todo.done
       })
       setTodos(
-        update(todos, {
-          [pos]: { done: { $set: !todo.done } }
-        })
+        update(todos, { [pos]: { done: { $set: !todo.done } } })
       )
     } catch (e) {
-      console.error('Failed to check/uncheck a TODO', e)
+      console.error('Failed to update TODO', e)
       alert('Failed to update todo')
     }
   }
@@ -115,7 +105,7 @@ export function Todos() {
         scope: 'delete:todos'
       })
       await deleteTodo(accessToken, todoId)
-      setTodos(todos.filter((t) => t.todoId !== todoId))
+      setTodos((prev) => prev.filter((t) => t.todoId !== todoId))
     } catch (e) {
       alert('Todo deletion failed')
       console.error(e)
@@ -137,11 +127,9 @@ export function Todos() {
     )
   }
 
-  // Render the list of todos safely
+  // Render todos list
   function renderTodosList() {
-    if (!todos || todos.length === 0) {
-      return <p>No todos yet!</p>
-    }
+    if (!todos.length) return <p>No todos yet!</p>
 
     return (
       <Grid padded>
@@ -150,14 +138,14 @@ export function Todos() {
             <Grid.Column width={1} verticalAlign="middle">
               <Checkbox
                 onChange={() => onTodoCheck(pos)}
-                checked={todo?.done ?? false}
+                checked={todo.done}
               />
             </Grid.Column>
             <Grid.Column width={10} verticalAlign="middle">
-              {todo?.name || 'Untitled'}
+              {todo.name}
             </Grid.Column>
             <Grid.Column width={3} floated="right">
-              {todo?.dueDate || 'No due date'}
+              {todo.dueDate}
             </Grid.Column>
             <Grid.Column width={1} floated="right">
               <Button
@@ -177,11 +165,14 @@ export function Todos() {
                 <Icon name="delete" />
               </Button>
             </Grid.Column>
-            {todo?.attachmentUrl && (
+
+            {/* Show image only if presigned URL exists */}
+            {todo.attachmentUrl && (
               <Grid.Column width={16}>
                 <Image src={todo.attachmentUrl} size="small" wrapped />
               </Grid.Column>
             )}
+
             <Grid.Column width={16}>
               <Divider />
             </Grid.Column>
@@ -191,18 +182,11 @@ export function Todos() {
     )
   }
 
-  function renderTodos() {
-    if (loadingTodos) return renderLoading()
-    return renderTodosList()
-  }
-
   return (
     <div>
       <Header as="h1">TODOs</Header>
-
       <NewTodoInput onNewTodo={handleNewTodo} />
-
-      {renderTodos()}
+      {loadingTodos ? renderLoading() : renderTodosList()}
     </div>
   )
 }
