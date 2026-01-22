@@ -42,7 +42,7 @@ export function EditTodo() {
       await uploadFile(uploadUrl, file)
 
       alert('File was uploaded!')
-      setFile(undefined) // reset file after success
+      setFile(undefined)
     } catch (e) {
       alert('Could not upload a file: ' + e.message)
     } finally {

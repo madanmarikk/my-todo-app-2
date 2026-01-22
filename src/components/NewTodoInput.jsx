@@ -25,7 +25,6 @@ export function NewTodoInput({ onNewTodo }) {
         dueDate
       })
 
-      // Normalize returned todo so UI never breaks
       const normalizedTodo = {
         todoId: createdTodo.todoId || Date.now().toString(),
         name: createdTodo.name || newTodoName,
@@ -35,7 +34,7 @@ export function NewTodoInput({ onNewTodo }) {
       }
 
       onNewTodo(normalizedTodo)
-      setNewTodoName('') // clear input
+      setNewTodoName('')
     } catch (e) {
       console.log('Failed to create a new TODO', e)
       alert('Todo creation failed')

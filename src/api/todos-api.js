@@ -1,6 +1,5 @@
 import Axios from 'axios'
 
-// Helper: ensure newTodo has all required fields
 function normalizeTodo(newTodo) {
   return {
     name: newTodo.name || 'Untitled',
@@ -21,13 +20,12 @@ export async function getTodos(accessToken) {
   )
   console.log('Todos fetched:', response.data)
 
-  // Return todos; attachmentUrl should already be presigned URL
   return response.data.items.map((item) => ({
     todoId: item.todoId,
     name: item.name,
     dueDate: item.dueDate,
     done: item.done ?? false,
-    attachmentUrl: item.attachmentUrl || null // presigned URL from backend
+    attachmentUrl: item.attachmentUrl || null
   }))
 }
 

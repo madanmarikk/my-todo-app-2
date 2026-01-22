@@ -22,7 +22,6 @@ export function Todos() {
   const [loadingTodos, setLoadingTodos] = useState(true)
   const navigate = useNavigate()
 
-  // Fetch todos on mount
   useEffect(() => {
     async function fetchTodos() {
       try {
@@ -32,7 +31,6 @@ export function Todos() {
         })
         const todosFromApi = await getTodos(accessToken)
 
-        // Ensure attachmentUrl is valid presigned URL
         const normalized = todosFromApi.map((t) => ({
           todoId: t.todoId,
           name: t.name || 'Untitled',
@@ -53,7 +51,6 @@ export function Todos() {
     fetchTodos()
   }, [getAccessTokenSilently])
 
-  // Add a new todo
   async function handleNewTodo(newTodo) {
     try {
       const accessToken = await getAccessTokenSilently({
@@ -75,7 +72,6 @@ export function Todos() {
     }
   }
 
-  // Toggle todo completion
   async function onTodoCheck(pos) {
     try {
       const todo = todos[pos]
@@ -97,7 +93,6 @@ export function Todos() {
     }
   }
 
-  // Delete a todo
   async function onTodoDelete(todoId) {
     try {
       const accessToken = await getAccessTokenSilently({
@@ -116,7 +111,6 @@ export function Todos() {
     navigate(`/todos/${todoId}/edit`)
   }
 
-  // Render loading state
   function renderLoading() {
     return (
       <Grid.Row>
@@ -127,7 +121,6 @@ export function Todos() {
     )
   }
 
-  // Render todos list
   function renderTodosList() {
     if (!todos.length) return <p>No todos yet!</p>
 
@@ -166,7 +159,6 @@ export function Todos() {
               </Button>
             </Grid.Column>
 
-            {/* Show image only if presigned URL exists */}
             {todo.attachmentUrl && (
               <Grid.Column width={16}>
                 <Image src={todo.attachmentUrl} size="medium" wrapped />
