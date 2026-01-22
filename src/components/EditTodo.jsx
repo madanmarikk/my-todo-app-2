@@ -11,47 +11,38 @@ const UploadState = {
 }
 
 export function EditTodo() {
-  function renderButton() {
-    return (
-      <div>
-        {uploadState === UploadState.FetchingPresignedUrl && (
-          <p>Uploading image metadata</p>
-        )}
-        {uploadState === UploadState.UploadingFile && <p>Uploading file</p>}
-        <Button loading={uploadState !== UploadState.NoUpload} type="submit">
-          Upload
-        </Button>
-      </div>
-    )
-  }
+  const [file, setFile] = useState(undefined)
+  const [uploadState, setUploadState] = useState(UploadState.NoUpload)
+  const { getAccessTokenSilently } = useAuth0()
+  const { todoId } = useParams()
 
-  function handleFileChange(event) {
+  const handleFileChange = (event) => {
     const files = event.target.files
-    if (!files) return
-
+    if (!files || files.length === 0) return
     setFile(files[0])
   }
 
-  async function handleSubmit(event) {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    if (!file) {
+      alert('File should be selected')
+      return
+    }
 
     try {
-      if (!file) {
-        alert('File should be selected')
-        return
-      }
-
       setUploadState(UploadState.FetchingPresignedUrl)
       const accessToken = await getAccessTokenSilently({
-        audience: `https://test-endpoint`,
+        audience: 'https://test-endpoint',
         scope: 'write:todos'
       })
+
       const uploadUrl = await getUploadUrl(accessToken, todoId)
 
       setUploadState(UploadState.UploadingFile)
       await uploadFile(uploadUrl, file)
 
       alert('File was uploaded!')
+      setFile(undefined) // reset file after success
     } catch (e) {
       alert('Could not upload a file: ' + e.message)
     } finally {
@@ -59,10 +50,21 @@ export function EditTodo() {
     }
   }
 
-  const [file, setFile] = useState(undefined)
-  const [uploadState, setUploadState] = useState(UploadState.NoUpload)
-  const { getAccessTokenSilently } = useAuth0()
-  const { todoId } = useParams()
+  const renderButton = () => (
+    <div>
+      {uploadState === UploadState.FetchingPresignedUrl && (
+        <p>Uploading image metadata...</p>
+      )}
+      {uploadState === UploadState.UploadingFile && <p>Uploading file...</p>}
+      <Button
+        loading={uploadState !== UploadState.NoUpload}
+        disabled={uploadState !== UploadState.NoUpload}
+        type="submit"
+      >
+        Upload
+      </Button>
+    </div>
+  )
 
   return (
     <div>

@@ -6,13 +6,17 @@ import { createTodo } from '../api/todos-api'
 
 export function NewTodoInput({ onNewTodo }) {
   const [newTodoName, setNewTodoName] = useState('')
-
   const { getAccessTokenSilently } = useAuth0()
 
-  const onTodoCreate = async (event) => {
+  const onTodoCreate = async () => {
+    if (!newTodoName.trim()) {
+      alert('Please enter a task name')
+      return
+    }
+
     try {
       const accessToken = await getAccessTokenSilently({
-        audience: `https://test-endpoint`,
+        audience: 'https://test-endpoint',
         scope: 'write:todos'
       })
       const dueDate = calculateDueDate()
@@ -20,9 +24,20 @@ export function NewTodoInput({ onNewTodo }) {
         name: newTodoName,
         dueDate
       })
-      onNewTodo(createdTodo)
+
+      // Normalize returned todo so UI never breaks
+      const normalizedTodo = {
+        todoId: createdTodo.todoId || Date.now().toString(),
+        name: createdTodo.name || newTodoName,
+        dueDate: createdTodo.dueDate || dueDate,
+        done: createdTodo.done ?? false,
+        attachmentUrl: createdTodo.attachmentUrl || null
+      }
+
+      onNewTodo(normalizedTodo)
+      setNewTodoName('') // clear input
     } catch (e) {
-      console.log('Failed to created a new TODO', e)
+      console.log('Failed to create a new TODO', e)
       alert('Todo creation failed')
     }
   }
@@ -41,6 +56,7 @@ export function NewTodoInput({ onNewTodo }) {
           fluid
           actionPosition="left"
           placeholder="To change the world..."
+          value={newTodoName}
           onChange={(event) => setNewTodoName(event.target.value)}
         />
       </Grid.Column>
@@ -54,6 +70,5 @@ export function NewTodoInput({ onNewTodo }) {
 function calculateDueDate() {
   const date = new Date()
   date.setDate(date.getDate() + 7)
-
   return dateFormat(date, 'yyyy-mm-dd')
 }

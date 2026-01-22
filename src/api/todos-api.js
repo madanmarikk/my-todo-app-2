@@ -1,13 +1,21 @@
 import Axios from 'axios'
 
-export async function getTodos(idToken) {
+// Helper: ensure newTodo has all required fields
+function normalizeTodo(newTodo) {
+  return {
+    name: newTodo.name || 'Untitled',
+    dueDate: newTodo.dueDate || new Date().toISOString(),
+    done: newTodo.done ?? false
+  }
+}
 
+export async function getTodos(accessToken) {
   const response = await Axios.get(
     `${process.env.REACT_APP_API_ENDPOINT}/todos`,
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`
+        Authorization: `Bearer ${accessToken}`
       }
     }
   )
@@ -16,50 +24,59 @@ export async function getTodos(idToken) {
   return response.data.items
 }
 
-export async function createTodo(idToken, newTodo) {
+export async function createTodo(accessToken, newTodo) {
+  const normalizedTodo = normalizeTodo(newTodo)
+
   const response = await Axios.post(
     `${process.env.REACT_APP_API_ENDPOINT}/todos`,
-    JSON.stringify(newTodo),
+    normalizedTodo, // Axios automatically stringifies objects
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`
+        Authorization: `Bearer ${accessToken}`
       }
     }
   )
-  return response.data.item
+  // Ensure returned item has done and todoId
+  const item = response.data.item
+  return {
+    todoId: item.todoId,
+    name: item.name,
+    dueDate: item.dueDate,
+    done: item.done ?? false
+  }
 }
 
-export async function patchTodo(idToken, todoId, updatedTodo) {
+export async function patchTodo(accessToken, todoId, updatedTodo) {
   await Axios.patch(
     `${process.env.REACT_APP_API_ENDPOINT}/todos/${todoId}`,
-    JSON.stringify(updatedTodo),
+    updatedTodo,
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`
+        Authorization: `Bearer ${accessToken}`
       }
     }
   )
 }
 
-export async function deleteTodo(idToken, todoId) {
+export async function deleteTodo(accessToken, todoId) {
   await Axios.delete(`${process.env.REACT_APP_API_ENDPOINT}/todos/${todoId}`, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${accessToken}`
     }
   })
 }
 
-export async function getUploadUrl(idToken, todoId) {
+export async function getUploadUrl(accessToken, todoId) {
   const response = await Axios.post(
     `${process.env.REACT_APP_API_ENDPOINT}/todos/${todoId}/attachment`,
     '',
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`
+        Authorization: `Bearer ${accessToken}`
       }
     }
   )
