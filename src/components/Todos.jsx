@@ -169,7 +169,7 @@ export function Todos() {
             {/* Show image only if presigned URL exists */}
             {todo.attachmentUrl && (
               <Grid.Column width={16}>
-                <Image src={todo.attachmentUrl} size="small" wrapped />
+                <Image src={todo.attachmentUrl} size="medium" wrapped />
               </Grid.Column>
             )}
 
