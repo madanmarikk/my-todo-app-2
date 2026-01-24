@@ -52,12 +52,23 @@ export function Todos() {
   }, [getAccessTokenSilently])
 
   async function handleNewTodo(newTodo) {
+    const trimmedName = newTodo.name?.trim()
+    if (!trimmedName || trimmedName.length < 3) {
+      alert("Todo name must be at least 3 characters and not all whitespace.")
+      return
+    }
+
     try {
       const accessToken = await getAccessTokenSilently({
         audience: 'https://test-endpoint',
         scope: 'write:todos'
       })
-      const createdTodo = await createTodo(accessToken, newTodo)
+
+      const createdTodo = await createTodo(accessToken, {
+        ...newTodo,
+        name: trimmedName
+      })
+
       const normalized = {
         todoId: createdTodo.todoId,
         name: createdTodo.name || 'Untitled',
@@ -65,7 +76,12 @@ export function Todos() {
         done: createdTodo.done ?? false,
         attachmentUrl: createdTodo.attachmentUrl || null
       }
-      setTodos((prev) => [...prev, normalized])
+
+      setTodos((prev) => {
+        const exists = prev.some((t) => t.todoId === normalized.todoId)
+        if (exists) return prev
+        return [...prev, normalized]
+      })
     } catch (e) {
       alert('Failed to create a new TODO')
       console.error(e)
@@ -84,9 +100,7 @@ export function Todos() {
         dueDate: todo.dueDate,
         done: !todo.done
       })
-      setTodos(
-        update(todos, { [pos]: { done: { $set: !todo.done } } })
-      )
+      setTodos(update(todos, { [pos]: { done: { $set: !todo.done } } }))
     } catch (e) {
       console.error('Failed to update TODO', e)
       alert('Failed to update todo')
