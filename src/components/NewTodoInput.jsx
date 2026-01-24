@@ -1,44 +1,22 @@
-import { useAuth0 } from '@auth0/auth0-react'
-import dateFormat from 'dateformat'
 import React, { useState } from 'react'
 import { Divider, Grid, Input } from 'semantic-ui-react'
-import { createTodo } from '../api/todos-api'
 
 export function NewTodoInput({ onNewTodo }) {
   const [newTodoName, setNewTodoName] = useState('')
-  const { getAccessTokenSilently } = useAuth0()
 
-  const onTodoCreate = async () => {
-    if (!newTodoName.trim()) {
-      alert('Please enter a task name')
+  const onTodoCreate = () => {
+    const trimmedName = newTodoName.trim()
+    if (!trimmedName || trimmedName.length < 3) {
+      alert('Todo name must be at least 3 characters and not all whitespace.')
       return
     }
 
-    try {
-      const accessToken = await getAccessTokenSilently({
-        audience: 'https://test-endpoint',
-        scope: 'write:todos'
-      })
-      const dueDate = calculateDueDate()
-      const createdTodo = await createTodo(accessToken, {
-        name: newTodoName,
-        dueDate
-      })
+    const dueDate = calculateDueDate()
 
-      const normalizedTodo = {
-        todoId: createdTodo.todoId || Date.now().toString(),
-        name: createdTodo.name || newTodoName,
-        dueDate: createdTodo.dueDate || dueDate,
-        done: createdTodo.done ?? false,
-        attachmentUrl: createdTodo.attachmentUrl || null
-      }
+    // Pass the todo to parent, parent will handle API
+    onNewTodo({ name: trimmedName, dueDate })
 
-      onNewTodo(normalizedTodo)
-      setNewTodoName('')
-    } catch (e) {
-      console.log('Failed to create a new TODO', e)
-      alert('Todo creation failed')
-    }
+    setNewTodoName('')
   }
 
   return (
@@ -69,5 +47,5 @@ export function NewTodoInput({ onNewTodo }) {
 function calculateDueDate() {
   const date = new Date()
   date.setDate(date.getDate() + 7)
-  return dateFormat(date, 'yyyy-mm-dd')
+  return date.toISOString().split('T')[0] // yyyy-mm-dd
 }

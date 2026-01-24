@@ -22,6 +22,7 @@ export function Todos() {
   const [loadingTodos, setLoadingTodos] = useState(true)
   const navigate = useNavigate()
 
+  // Fetch todos on load
   useEffect(() => {
     async function fetchTodos() {
       try {
@@ -51,35 +52,27 @@ export function Todos() {
     fetchTodos()
   }, [getAccessTokenSilently])
 
+  // Handle creating new todo
   async function handleNewTodo(newTodo) {
-    const trimmedName = newTodo.name?.trim()
-    if (!trimmedName || trimmedName.length < 3) {
-      alert("Todo name must be at least 3 characters and not all whitespace.")
-      return
-    }
-
     try {
       const accessToken = await getAccessTokenSilently({
         audience: 'https://test-endpoint',
         scope: 'write:todos'
       })
 
-      const createdTodo = await createTodo(accessToken, {
-        ...newTodo,
-        name: trimmedName
-      })
+      const createdTodo = await createTodo(accessToken, newTodo)
 
       const normalized = {
         todoId: createdTodo.todoId,
-        name: createdTodo.name || 'Untitled',
-        dueDate: createdTodo.dueDate || new Date().toISOString(),
+        name: createdTodo.name || newTodo.name,
+        dueDate: createdTodo.dueDate || newTodo.dueDate,
         done: createdTodo.done ?? false,
         attachmentUrl: createdTodo.attachmentUrl || null
       }
 
+      // Prevent duplicates if backend returns same todoId
       setTodos((prev) => {
-        const exists = prev.some((t) => t.todoId === normalized.todoId)
-        if (exists) return prev
+        if (prev.some((t) => t.todoId === normalized.todoId)) return prev
         return [...prev, normalized]
       })
     } catch (e) {
@@ -88,6 +81,7 @@ export function Todos() {
     }
   }
 
+  // Toggle todo done
   async function onTodoCheck(pos) {
     try {
       const todo = todos[pos]
@@ -107,6 +101,7 @@ export function Todos() {
     }
   }
 
+  // Delete todo
   async function onTodoDelete(todoId) {
     try {
       const accessToken = await getAccessTokenSilently({
